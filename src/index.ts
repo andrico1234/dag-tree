@@ -1,36 +1,13 @@
-const keys = [
-  { id: "plank", parentIds: [] },
-  { id: "incline-push-up", parentIds: [] },
-  {
-    id: "push-up",
-    parentIds: ["incline-push-up", "plank"],
-  },
-  { id: "diamond-push-up", parentIds: ["push-up"] },
-  {
-    id: "pseudo-planche-push-up",
-    parentIds: ["diamond-push-up"],
-  },
-  {
-    id: "pike-push-up",
-    parentIds: ["pseudo-planche-push-up"],
-  },
-  { id: "archer-push-up", parentIds: ["pike-push-up"] },
-  {
-    id: "rto-push-up",
-    parentIds: ["diamond-push-up"],
-  },
-];
-
-interface Edge {
+export interface Edge {
   node: string;
   incomingNodes: string[];
   hasOutgoing: boolean;
 }
 
-type Callback = (edge: Edge, path: string[]) => void;
-type Edges = Record<string, Edge>;
+export type Callback = (edge: Edge, path: string[]) => void;
+export type Edges = Record<string, Edge>;
 
-interface EdgeToAdd {
+export interface EdgeToAdd {
   toName: string;
   fromNames: string[];
 }
@@ -132,19 +109,3 @@ class DAG {
 }
 
 export default DAG;
-
-const skillTreeDAG = new DAG();
-
-const nodes = keys.map(({ id }) => id);
-const edges = keys
-  .map(({ id, parentIds }) => {
-    if (!parentIds.length) return null;
-
-    return { toName: id, fromNames: parentIds };
-  })
-  .filter((x): x is EdgeToAdd => Boolean(x));
-
-skillTreeDAG.addNodes(nodes);
-skillTreeDAG.addEdges(edges);
-
-console.log(skillTreeDAG.edges);
