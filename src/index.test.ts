@@ -1,5 +1,5 @@
 import Dag from "./index";
-import { getNodes, getEdges } from "./example";
+import { getNodes, getEdges } from "./utils";
 
 type Roadmap = Array<{
   id: string;
@@ -98,6 +98,8 @@ describe("DAG", () => {
 
   it("should throw an error on cycle", () => {
     try {
+      expect.assertions(1);
+
       const dag = new Dag();
 
       const nodes = getNodes(frontEndRoadmap);
@@ -109,6 +111,24 @@ describe("DAG", () => {
       dag.addEdge("html", "accessibility");
     } catch (err) {
       expect(err.message).toBe("cycle detected: html <- accessibility <- html");
+    }
+  });
+
+  it("should throw an error on a depper cycle", () => {
+    try {
+      expect.assertions(1);
+
+      const dag = new Dag();
+
+      const nodes = getNodes(frontEndRoadmap);
+      const edges = getEdges(frontEndRoadmap);
+
+      dag.addNodes(nodes);
+      dag.addEdges(edges);
+
+      dag.addEdge("html", "positioning");
+    } catch (err) {
+      expect(err.message).toBe("cycle detected: html <- positioning <- html");
     }
   });
 });

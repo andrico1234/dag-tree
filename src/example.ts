@@ -1,9 +1,5 @@
 import Dag, { Edge } from "./index";
-
-type Roadmap = Array<{
-  id: string;
-  parentIds: string[];
-}>;
+import { getEdges, getNodes, Roadmap } from "./utils";
 
 const frontEndRoadmap: Roadmap = [
   {
@@ -39,18 +35,6 @@ const frontEndRoadmap: Roadmap = [
     parentIds: ["making-layouts"],
   },
 ];
-
-export const getNodes = (data: Roadmap) => data.map((x) => x.id);
-
-export const getEdges = (data: Roadmap) =>
-  data
-    .map(({ id, parentIds }) => {
-      if (!parentIds.length) return null;
-
-      return parentIds.map((parentId) => ({ to: id, from: parentId }));
-    })
-    .filter((x): x is Edge[] => Boolean(x))
-    .reduce((acc, x) => acc.concat(x), []);
 
 const dag = new Dag();
 
