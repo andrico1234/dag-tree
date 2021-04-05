@@ -1,4 +1,5 @@
-import Dag, { EdgeToAdd } from "./index";
+import Dag from "./index";
+import { getNodes, getEdges } from "./example";
 
 type Roadmap = Array<{
   id: string;
@@ -40,17 +41,6 @@ const frontEndRoadmap: Roadmap = [
   },
 ];
 
-const getNodes = (data: Roadmap) => data.map((x) => x.id);
-
-const getEdges = (data: Roadmap) =>
-  data
-    .map(({ id, parentIds }) => {
-      if (!parentIds.length) return null;
-
-      return { toName: id, fromNames: parentIds };
-    })
-    .filter((x): x is EdgeToAdd => Boolean(x));
-
 describe("DAG", () => {
   it("should display a simple DAG", () => {
     const dag = new Dag();
@@ -62,7 +52,14 @@ describe("DAG", () => {
     dag.addEdges(edges);
 
     expect(dag.nodes).toEqual(nodes);
-    expect(dag.edges["making-layouts"].incomingNodes).toEqual(["html", "css"]);
+
+    const makingLayoutsEdges = dag.getEdgesFromNodeId("making-layouts");
+
+    expect(makingLayoutsEdges).toEqual([
+      { from: "making-layouts", to: "floats" },
+      { from: "making-layouts", to: "positioning" },
+      { from: "making-layouts", to: "display" },
+    ]);
   });
 
   it("should not duplicate multiple nodes", () => {
@@ -90,9 +87,13 @@ describe("DAG", () => {
 
     dag.addEdge("seo-basics", "html");
 
-    expect(
-      dag.edges["seo-basics"].incomingNodes.filter((x) => x === "html")
-    ).toHaveLength(1);
+    const htmlEdges = dag.getEdgesFromNodeId("html");
+
+    expect(htmlEdges).toEqual([
+      { to: "accessibility", from: "html" },
+      { to: "seo-basics", from: "html" },
+      { to: "making-layouts", from: "html" },
+    ]);
   });
 
   it("should throw an error on cycle", () => {

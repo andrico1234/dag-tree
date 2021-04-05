@@ -1,4 +1,4 @@
-import Dag, { EdgeToAdd } from "./index";
+import Dag, { Edge } from "./index";
 
 type Roadmap = Array<{
   id: string;
@@ -40,16 +40,17 @@ const frontEndRoadmap: Roadmap = [
   },
 ];
 
-const getNodes = (data: Roadmap) => data.map((x) => x.id);
+export const getNodes = (data: Roadmap) => data.map((x) => x.id);
 
-const getEdges = (data: Roadmap) =>
+export const getEdges = (data: Roadmap) =>
   data
     .map(({ id, parentIds }) => {
       if (!parentIds.length) return null;
 
-      return { toName: id, fromNames: parentIds };
+      return parentIds.map((parentId) => ({ to: id, from: parentId }));
     })
-    .filter((x): x is EdgeToAdd => Boolean(x));
+    .filter((x): x is Edge[] => Boolean(x))
+    .reduce((acc, x) => acc.concat(x), []);
 
 const dag = new Dag();
 
@@ -58,6 +59,3 @@ const edges = getEdges(frontEndRoadmap);
 
 dag.addNodes(nodes);
 dag.addEdges(edges);
-
-console.log(dag.nodes);
-console.log(dag.edges["making-layouts"].incomingNodes);

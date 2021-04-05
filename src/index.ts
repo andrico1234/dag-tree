@@ -1,40 +1,27 @@
 export interface Edge {
-  node: string;
-  incomingNodes: string[];
-  hasOutgoing: boolean;
+  to: string;
+  from: string;
 }
 
 export type Callback = (edge: Edge, path: string[]) => void;
 export type Edges = Record<string, Edge>;
 
-export interface EdgeToAdd {
-  toName: string;
-  fromNames: string[];
-}
-
 class DAG {
   nodes: string[];
-  edges: Edges;
+  edges: Edge[];
 
   constructor() {
     this.nodes = [];
-    this.edges = {};
+    this.edges = [];
   }
 
   addNode = (node: string) => {
-    if (this.edges[node]) {
-      return this.edges[node];
+    if (this.nodes.includes(node)) {
+      return node;
     }
 
-    const edge: Edge = {
-      node,
-      incomingNodes: [],
-      hasOutgoing: false,
-    };
-
-    this.edges[node] = edge;
     this.nodes.push(node);
-    return edge;
+    return node;
   };
 
   addNodes = (nodes: string[]) => {
@@ -48,32 +35,34 @@ class DAG {
     const to = this.addNode(toName);
     const from = this.addNode(fromName);
 
-    if (to.incomingNodes.includes(fromName)) {
+    if (this.checkEdgeExists(to, from)) {
       return null;
     }
 
     function checkCycle(edge: Edge, path: string[]) {
-      if (edge.node === toName) {
+      if (edge.from === toName) {
         throw new Error(
           "cycle detected: " + toName + " <- " + path.join(" <- ")
         );
       }
     }
 
-    this.visit(from, checkCycle);
+    const newEdge = { to, from };
 
-    to.incomingNodes.push(fromName);
-    from.hasOutgoing = true;
+    this.visit(newEdge, checkCycle);
+    this.edges.push(newEdge);
   };
 
-  addEdges = (edges: EdgeToAdd[]) => {
-    const res = edges.map(({ toName, fromNames }) => {
-      return fromNames.map((fromName) => {
-        return this.addEdge(toName, fromName);
-      });
+  addEdges = (edges: Edge[]) => {
+    const res = edges.map(({ to, from }) => {
+      return this.addEdge(to, from);
     });
 
     return res;
+  };
+
+  getEdgesFromNodeId = (fromNodeId: string) => {
+    return this.edges.filter((edge) => edge.from === fromNodeId);
   };
 
   visit = (
@@ -82,15 +71,11 @@ class DAG {
     visited: Record<string, boolean> = {},
     path: string[] = []
   ) => {
-    const node = edge.node;
-    const nodes = edge.incomingNodes;
+    const node = edge.from;
+    // these should just be the edges of the from?
+    const edges = this.edges.filter(({ from }) => from === edge.from);
 
-    const edges: Edges = nodes.reduce(
-      (acc, node) => ({ ...acc, [node]: this.edges[node] }),
-      {}
-    );
-
-    const len = nodes.length;
+    const len = edges.length;
 
     if (visited.hasOwnProperty(node)) {
       return;
@@ -100,11 +85,17 @@ class DAG {
     visited[node] = true;
 
     for (let i = 0; i < len; i++) {
-      this.visit(edges[nodes[i]], fn, visited, path);
+      this.visit(edges[i], fn, visited, path);
     }
 
     fn(edge, path);
     path.pop();
+  };
+
+  checkEdgeExists = (to: string, from: string) => {
+    const edges = this.edges;
+
+    return edges.some((edge) => edge.to === to && edge.from === from);
   };
 }
 
